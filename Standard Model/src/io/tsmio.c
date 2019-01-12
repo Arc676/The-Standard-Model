@@ -14,6 +14,16 @@
 
 #include "tsmio.h"
 
+InputType tsmIO_getNextInputType(FILE* file) {
+	InputType type;
+	fread(&type, sizeof InputType, 1, file);
+	return type;
+}
+
+void tsmIO_writeInputType(InputType type, FILE* file) {
+	fwrite(&type, sizeof InputType, 1, file);
+}
+
 void tsmIO_writeParticle(Particle* particle, FILE* file) {
 	fwrite(particle, sizeof Particle, 1, file);
 }

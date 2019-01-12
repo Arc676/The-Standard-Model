@@ -43,7 +43,7 @@
  * w, h, p, or g - whether the particle is a weak force mediator, the Higgs boson, a photon, or a gluon (a unique value is assigned
  * 			to each boson, except the W and Z bosons)
  */
-typedef enum ParticleType : int {
+typedef enum ParticleType {
 	BOSON		= 0b0001,
 	FERMION		= 0b0010,
 
@@ -84,5 +84,9 @@ typedef struct Particle {
 	double charge;
 	float spin;
 } Particle;
+
+void particle_applyForce(Particle* particle, Vector3* force, double dt);
+
+void particle_update(Particle* particle, double dt);
 
 #endif

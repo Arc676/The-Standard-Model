@@ -12,20 +12,15 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "vector.h"
+#ifndef TSMIO_H
+#define TSMIO_H
 
-double norm2(Vector3* v) {
-	return sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
-}
+#include <stdio.h>
 
-void vector3_add(Vector3* dst, Vector3* a, Vector3* b) {
-	dst->x = a->x + b->x;
-	dst->y = a->y + b->y;
-	dst->z = a->z + b->z;
-}
+#include "particle.h"
 
-void vector3_mul(Vector3* dst, Vector3* v, double k) {
-	dst->x = v->x * k;
-	dst->y = v->y * k;
-	dst->z = v->z * k;
-}
+void tsmIO_writeParticle(Particle* particle, FILE* file);
+
+void tsmIO_readParticle(Particle* particle, FILE* file);
+
+#endif

@@ -19,7 +19,7 @@
 
 #include "particle.h"
 
-typedef enum InputType : int {
+typedef enum InputType {
 	PARTICLE = 0
 } InputType;
 
@@ -27,8 +27,12 @@ InputType tsmIO_getNextInputType(FILE* file);
 
 void tsmIO_writeInputType(InputType type, FILE* file);
 
+void tsmIO_readParticle(Particle* particle, FILE* file);
+
 void tsmIO_writeParticle(Particle* particle, FILE* file);
 
-void tsmIO_readParticle(Particle* particle, FILE* file);
+void tsmIO_readParticles(Particle* particles, int count, FILE* file);
+
+void tsmIO_writeParticles(Particle* particles, int count, FILE* file);
 
 #endif

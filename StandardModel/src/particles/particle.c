@@ -19,7 +19,7 @@ void particle_applyForce(Particle* particle, Vector3* force, double dt) {
 		return;
 	}
 	Vector3 acceleration;
-	vector3_mul(&acceleration, &force, dt / particle->mass);
+	vector3_mul(&acceleration, force, dt / particle->mass);
 	vector3_add(&(particle->velocity), &(particle->velocity), &acceleration);
 }
 

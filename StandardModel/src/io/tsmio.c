@@ -16,18 +16,27 @@
 
 InputType tsmIO_getNextInputType(FILE* file) {
 	InputType type;
-	fread(&type, sizeof InputType, 1, file);
+	fread(&type, sizeof(InputType), 1, file);
 	return type;
 }
 
 void tsmIO_writeInputType(InputType type, FILE* file) {
-	fwrite(&type, sizeof InputType, 1, file);
-}
-
-void tsmIO_writeParticle(Particle* particle, FILE* file) {
-	fwrite(particle, sizeof Particle, 1, file);
+	fwrite(&type, sizeof(InputType), 1, file);
 }
 
 void tsmIO_readParticle(Particle* particle, FILE* file) {
-	fread(particle, sizeof Particle, 1, file);
+	fread(particle, sizeof(Particle), 1, file);
+}
+
+void tsmIO_writeParticle(Particle* particle, FILE* file) {
+	tsmIO_writeInputType(PARTICLE, file);
+	fwrite(particle, sizeof(Particle), 1, file);
+}
+
+void tsmIO_readParticles(Particle* particles, int count, FILE* file) {
+	fread(particles, sizeof(Particle), count, file);
+}
+
+void tsmIO_writeParticles(Particle* particles, int count, FILE* file) {
+	fwrite(particles, sizeof(Particle), count, file);
 }

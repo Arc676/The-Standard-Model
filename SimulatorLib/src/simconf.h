@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include "particle.h"
+#include "tsmio.h"
 
 typedef struct TSMSimulationConfiguration {
 	int particleCount;

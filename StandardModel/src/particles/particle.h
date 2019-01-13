@@ -15,6 +15,8 @@
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
+#include <stdio.h>
+
 #include "vector.h"
 
 /**
@@ -88,5 +90,7 @@ typedef struct Particle {
 void particle_applyForce(Particle* particle, Vector3* force, double dt);
 
 void particle_update(Particle* particle, double dt);
+
+void particle_typeToString(Particle* particle, char* str);
 
 #endif

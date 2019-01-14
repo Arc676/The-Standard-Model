@@ -91,7 +91,7 @@ int main() {
 	input[strlen(input) - 1] = 0;
 	FILE* file = fopen(input, "wb");
 	simconf_writeSimulationConfiguration(&simConfig, file);
-	tsmIO_writeParticles(particles, simConfig.particleCount, file);
+	tsmIO_writeParticlesRaw(particles, simConfig.particleCount, file);
 	fclose(file);
 
 	free(particles);

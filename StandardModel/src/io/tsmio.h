@@ -20,19 +20,34 @@
 #include "particle.h"
 
 typedef enum InputType {
-	PARTICLE = 0
+	PARTICLE = 0,
+	MULTIPLE_PARTICLES,
+	TIME,
+	SIMULATION_TERMINATED
 } InputType;
 
 InputType tsmIO_getNextInputType(FILE* file);
 
 void tsmIO_writeInputType(InputType type, FILE* file);
 
+void tsmIO_readInt(int* value, FILE* file);
+
+void tsmIO_writeInt(int* value, FILE* file);
+
 void tsmIO_readParticle(Particle* particle, FILE* file);
 
 void tsmIO_writeParticle(Particle* particle, FILE* file);
 
-void tsmIO_readParticles(Particle* particles, int count, FILE* file);
+int tsmIO_readParticles(Particle* particles, FILE* file);
+
+void tsmIO_readParticlesRaw(Particle* particles, int count, FILE* file);
 
 void tsmIO_writeParticles(Particle* particles, int count, FILE* file);
+
+void tsmIO_writeParticlesRaw(Particle* particles, int count, FILE* file);
+
+void tsmIO_readTime(double* time, FILE* file);
+
+void tsmIO_writeTime(double* time, FILE* file);
 
 #endif

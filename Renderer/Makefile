@@ -4,8 +4,8 @@ SDIR=src
 BDIR=bin
 
 CC=gcc
-FLAGS=-std=c11 $(patsubst %, -I %, $(shell echo ../StandardModel/src/*))
-LIB=-L ../StandardModel -l standardmodel -lm -L ../OpenGLRecorder -l openglrecorder
+FLAGS=-std=c11 $(patsubst %, -I %, $(shell echo ../StandardModel/src/*)) -I ../OpenGLRecorder/src
+LIB=-L ../StandardModel -l standardmodel -lm -L ../OpenGLRecorder -l openglrecorder -l GL -l GLU -l glut -l avcodec -l swscale -l avutil
 
 EXECOUT=$(BDIR)/tsm_render
 

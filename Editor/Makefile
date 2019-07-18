@@ -16,7 +16,7 @@ endif
 OBJS=$(shell find $(SDIR) -name '*.c' -printf "%f\n")
 _OBJS=$(patsubst %.c, $(ODIR)/%.o, $(OBJS))
 
-simulator: makedir $(_OBJS)
+editor: makedir $(_OBJS)
 	$(CC) $(_OBJS) $(LIB) -o $(EXECOUT)
 
 makedir:

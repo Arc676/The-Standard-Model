@@ -1,0 +1,3 @@
+[submodule "OpenGLRecorder"]
+	path = OpenGLRecorder
+	url = git@github.com:Arc676/OpenGLRecorder.git

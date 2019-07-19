@@ -1,0 +1,3 @@
+*.h linguist-language=C
+OpenGLRecorder/* linguist-vendored
+imgui/* linguist-vendored

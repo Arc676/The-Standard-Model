@@ -1,3 +1,6 @@
 [submodule "OpenGLRecorder"]
 	path = OpenGLRecorder
 	url = git@github.com:Arc676/OpenGLRecorder.git
+[submodule "imgui"]
+	path = imgui
+	url = git@github.com:ocornut/imgui.git

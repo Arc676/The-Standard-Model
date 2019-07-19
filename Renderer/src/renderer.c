@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+#define ARG_ERROR 1
+#define CORRUPT_INPUT 2
+#define RENDER_ERROR 3
+
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -25,18 +29,25 @@
 
 #include "glrecorder.h"
 
+typedef struct SimulationParameters {
+	Particle* particles;
+	int particleCount;
+	double time;
+	FILE* simData;
+} SimulationParameters;
+
 // Render statistics (for FPS)
 unsigned int startTime;
 
 // Render parameters
 unsigned int renderHeight = 0, renderWidth = 0;
 RecorderParameters* params;
-char* outputFilename = NULL;
+SimulationParameters* simParams;
 
 // OpenGL data
 GLuint fbo, rboColor, rboDepth;
 
-void initGL() {
+void initGL(char* outputFilename) {
 	int glget;
 	/*if (offscreen) {
 		// Framebuffer
@@ -80,18 +91,53 @@ void initGL() {
 	EncoderState state = glrecorder_startEncoder(params, outputFilename, AV_CODEC_ID_MPEG1VIDEO, 25);
 	if (state != SUCCESS) {
 		fprintf(stderr, "%s\n", glrecorder_stateToString(state));
-		exit(1);
+		exit(RENDER_ERROR);
 	}
 }
 
 void renderGL() {
+	Particle* particles = simParams->particles;
+	FILE* simData = simParams->simData;
+
+	InputType type = tsmIO_getNextInputType(simData);
+	if (type == SIMULATION_TERMINATED) {
+		free(particles);
+		fclose(simData);
+		exit(0);
+	}
+	switch (type) {
+	case TIME:
+		tsmIO_readTime(&(simParams->time), simData);
+		return;
+	case MULTIPLE_PARTICLES:
+		simParams->particleCount = tsmIO_readParticles(particles, simData);
+		break;
+	default:
+		return;
+	}
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	// draw the simulation state
+	for (int i = 0; i < simParams->particleCount; i++) {
+		Vector3 position = particles[i].position;
+		glLoadIdentity();
+		glBegin(GL_TRIANGLES);
+		glColor3f(1.f, 0.f, 0.f);
+		glVertex3f(position.x, position.y, position.z);
+		glColor3f(1.f, 0.f, 0.f);
+		glVertex3f(position.x + .5f, position.y, position.z);
+		glColor3f(1.f, 0.f, 0.f);
+		glVertex3f(position.x, position.y + .5f, position.z);
+		glEnd();
+	}
+
 	// if offscreen, glFlush();
 	glutSwapBuffers();
 	EncoderState state = glrecorder_recordFrame(params);
 	if (state != SUCCESS) {
 		fprintf(stderr, "%s\n", glrecorder_stateToString(state));
-		exit(1);
+		exit(RENDER_ERROR);
 	}
 }
 
@@ -104,7 +150,7 @@ void deinitGL() {
 	EncoderState state = glrecorder_stopEncoder(params);
 	if (state != SUCCESS) {
 		fprintf(stderr, "%s\n", glrecorder_stateToString(state));
-		exit(1);
+		exit(RENDER_ERROR);
 	}
 	/*
 	if (offscreen) {
@@ -126,9 +172,52 @@ void printParticles(Particle* particles, int count) {
 	}
 }
 
+int renderSimulation(char* inputFile, char* outputFile) {
+	FILE* simData = fopen(inputFile, "rb");
+	int maxParticleCount;
+	tsmIO_readInt(&maxParticleCount, simData);
+
+	double t;
+	tsmIO_readTime(&t, simData);
+
+	if (tsmIO_getNextInputType(simData) != PARTICLE) {
+		fclose(simData);
+		fprintf(stderr, "Corrupt input file\n");
+		return CORRUPT_INPUT;
+	}
+
+	params = glrecorder_initParams(renderWidth, renderHeight);
+
+	Particle* particles = malloc(maxParticleCount * sizeof(Particle));
+	int particleCount = tsmIO_readParticles(particles, simData);
+	simParams = malloc(sizeof(SimulationParameters));
+	simParams->particles = particles;
+	simParams->particleCount = particleCount;
+	simParams->time = t;
+	simParams->simData = simData;
+
+	GLint glutDisplay;
+	int ac = 1;
+	char* av[1] = {(char*)""};
+	glutInit(&ac, av);
+	glutInitWindowSize(renderWidth, renderHeight);
+	glutDisplay = GLUT_DOUBLE;
+	glutInitDisplayMode(glutDisplay | GLUT_RGBA | GLUT_DEPTH);
+	glutCreateWindow("TSM Renderer");
+
+	initGL(outputFile);
+	glutDisplayFunc(renderGL);
+	glutIdleFunc(idleGL);
+	atexit(deinitGL);
+	glutMainLoop();
+	return 0;
+}
+
 int main(int argc, char* argv[]) {
 	char inputFile[255];
 	inputFile[0] = 0;
+	char outputFile[255];
+	outputFile[0] = 0;
 	int opt;
 	while ((opt = getopt(argc, argv, "i:o:h:w:")) != -1) {
 		switch (opt) {
@@ -136,11 +225,7 @@ int main(int argc, char* argv[]) {
 			sprintf(inputFile, "%s", optarg);
 			break;
 		case 'o':
-			if (outputFilename) {
-				free(outputFilename);
-			}
-			outputFilename = malloc(strlen(optarg));
-			sprintf(outputFilename, "%s", optarg);
+			sprintf(outputFile, "%s", optarg);
 			break;
 		case 'h':
 			renderHeight = (unsigned int)strtol(optarg, (char**)NULL, 0);
@@ -150,65 +235,17 @@ int main(int argc, char* argv[]) {
 			break;
 		default:
 			fprintf(stderr, "Invalid arguments\n");
-			return 1;
+			return ARG_ERROR;
 		}
 	}
 	if (strlen(inputFile) == 0) {
 		fprintf(stderr, "No input file specified\n");
-		return 1;
+		return ARG_ERROR;
+	}
+	if (strlen(outputFile) == 0) {
+		fprintf(stderr, "No output file specified\n");
+		return ARG_ERROR;
 	}
 
-	FILE* simData = fopen(inputFile, "rb");
-	int maxParticleCount;
-	tsmIO_readInt(&maxParticleCount, simData);
-
-	double t = 0;
-	tsmIO_readTime(&t, simData);
-
-	if (tsmIO_getNextInputType(simData) != PARTICLE) {
-		fclose(simData);
-		fprintf(stderr, "Corrupt input file\n");
-		return 2;
-	}
-
-	GLint glutDisplay;
-	int ac = 1;
-	char* av[1] = {(char*)""};
-	glutInit(&ac, av);
-	glutInitWindowSize(renderWidth, renderHeight);
-	glutDisplay = GLUT_DOUBLE;
-	glutInitDisplayMode(glutDisplay | GLUT_RGBA | GLUT_DEPTH);
-
-	params = glrecorder_initParams(renderWidth, renderHeight);
-
-	/*
-	initGL();
-	glutDisplayFunc(renderGL);
-	glutIdleFunc(idleGL);
-	atexit(deinitGL);
-	glutMainLoop();
-	*/
-
-	Particle* particles = malloc(maxParticleCount * sizeof(Particle));
-	int particleCount = tsmIO_readParticles(particles, simData);
-
-	InputType type;
-	while ((type = tsmIO_getNextInputType(simData)) != SIMULATION_TERMINATED) {
-		switch (type) {
-		case TIME:
-			tsmIO_readTime(&t, simData);
-			break;
-		case MULTIPLE_PARTICLES:
-			particleCount = tsmIO_readParticles(particles, simData);
-			printf("Time: %f\n", t);
-			printParticles(particles, particleCount);
-			break;
-		default:
-			break;
-		}
-	}
-
-	free(particles);
-	fclose(simData);
-	return 0;
+	return renderSimulation(inputFile, outputFile);
 }

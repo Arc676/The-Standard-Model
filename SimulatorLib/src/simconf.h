@@ -12,6 +12,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SIMCONF_H
 #define SIMCONF_H
 
@@ -31,4 +35,8 @@ void simconf_writeSimulationConfiguration(SimConf* simconf, FILE* file);
 
 void simconf_readInitialParticles(SimConf* simconf, Particle* particles, FILE* file);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

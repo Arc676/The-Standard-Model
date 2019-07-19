@@ -23,5 +23,5 @@ void simconf_writeSimulationConfiguration(SimConf* simconf, FILE* file) {
 }
 
 void simconf_readInitialParticles(SimConf* simconf, Particle* particles, FILE* file) {
-	tsmIO_readParticles(particles, simconf->particleCount, file);
+	tsmIO_readParticlesRaw(particles, simconf->particleCount, file);
 }

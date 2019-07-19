@@ -12,6 +12,10 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef VECTOR_H
 #define VECTOR_H
 
@@ -29,4 +33,8 @@ void vector3_add(Vector3* dst, Vector3* a, Vector3* b);
 
 void vector3_mul(Vector3* dst, Vector3* v, double k);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

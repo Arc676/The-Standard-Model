@@ -12,6 +12,10 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
@@ -93,4 +97,8 @@ void particle_update(Particle* particle, double dt);
 
 void particle_typeToString(Particle* particle, char* str);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

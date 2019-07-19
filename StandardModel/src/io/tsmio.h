@@ -12,6 +12,10 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef TSMIO_H
 #define TSMIO_H
 
@@ -50,4 +54,8 @@ void tsmIO_readTime(double* time, FILE* file);
 
 void tsmIO_writeTime(double* time, FILE* file);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

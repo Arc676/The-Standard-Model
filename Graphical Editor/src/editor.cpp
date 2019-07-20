@@ -42,6 +42,51 @@ void RadioButtonF(const char* label, float* v, float v_button) {
 	}
 }
 
+void RadioButtonD(const char* label, double* v, double v_button) {
+	if (ImGui::RadioButton(label, *v == v_button)) {
+		*v = v_button;
+	}
+}
+
+int indexForType(ParticleType type) {
+	switch (type) {
+	case ELECTRON:
+		return 0;
+	case MUON:
+		return 1;
+	case TAU:
+		return 2;
+	case ENEUTRINO:
+		return 3;
+	case MNEUTRINO:
+		return 4;
+	case TNEUTRINO:
+		return 5;
+	case UPQ:
+		return 6;
+	case DOWNQ:
+		return 7;
+	case CHARMQ:
+		return 8;
+	case STRANGEQ:
+		return 9;
+	case TOPQ:
+		return 10;
+	case BOTTOMQ:
+		return 11;
+	case GLUON:
+		return 12;
+	case PHOTON:
+		return 13;
+	case HIGGS:
+		return 14;
+	case ZWBOSON:
+		return 16;
+	default:
+		return -1;
+	}
+}
+
 void saveConfiguration() {
 	FILE* file = fopen(outputFilename, "wb");
 	simconf_writeSimulationConfiguration(&simConfig, file);
@@ -120,7 +165,7 @@ int main() {
 				if (ImGui::Button("Add Particle")) {
 					int idx = simConfig.particleCount++;
 					particles[idx] = (Particle){
-						idx, 0, ELECTRON, {0, 0, 0}, {1, 0, 0}, 1.0, 1.0, 0.5f
+						idx, 0, ELECTRON, {0, 0, 0}, {0, 0, 0}, particle_getMassForType(ELECTRON, 1), -1.0, 0.5f
 					};
 					if (simConfig.particleCount >= particleArraySize) {
 						resizeArray();
@@ -128,50 +173,117 @@ int main() {
 				}
 
 				for (int i = 0; i < simConfig.particleCount; i++) {
-					if (ImGui::TreeNode("Particle")) {
+					char buffer[100];
+					sprintf(buffer, "Particle %d", i);
+					if (ImGui::TreeNode(buffer)) {
 						Particle* particle = particles + i;
+
+						ImGui::Text("Particle Type");
+						ImGui::SameLine();
+						static const char* types[] = {
+							"Electron", "Muon", "Tau",
+							"Electron Neutrino", "Muon Neutrino", "Tau Neutrino",
+							"Up Quark", "Down Quark",
+							"Charm Quark", "Strange Quark",
+							"Top Quark", "Bottom Quark",
+							"Gluon", "Photon", "Higgs Boson", "Z or W Boson"
+						};
+						static const ParticleType ptypes[] = {
+							ELECTRON, MUON, TAU,
+							ENEUTRINO, MNEUTRINO, TNEUTRINO,
+							UPQ, DOWNQ,
+							CHARMQ, STRANGEQ,
+							TOPQ, BOTTOMQ,
+							GLUON, PHOTON, HIGGS, ZWBOSON
+						};
+						static const int PARTICLE_COUNT = 16;
+						const char* selected = types[indexForType(particle->type)];
+						sprintf(buffer, "##Type%d", i);
+						if (ImGui::BeginCombo(buffer, selected)) {
+							for (int i = 0; i < PARTICLE_COUNT; i++) {
+								bool isSelected = (selected == types[i]);
+								sprintf(buffer, "%s##TypeSelect%d", types[i], i);
+								if (ImGui::Selectable(buffer, isSelected)) {
+									selected = types[i];
+									particle_switchToType(particle, ptypes[i]);
+								}
+								if (isSelected) {
+									ImGui::SetItemDefaultFocus();
+								}
+							}
+							ImGui::EndCombo();
+						}
 
 						ImGui::Text("Strangeness");
 						ImGui::SameLine();
-						ImGui::InputInt("##Strangeness", &(particle->strangeness), ImGuiInputTextFlags_ReadOnly);
+						sprintf(buffer, "##Strangeness%d", i);
+						ImGui::InputInt(buffer, &(particle->strangeness), 0, 0, ImGuiInputTextFlags_ReadOnly);
 
 						ImGui::Text("Mass");
 						ImGui::SameLine();
-						ImGui::InputDouble("##Mass", &(particle->mass), ImGuiInputTextFlags_ReadOnly);
+						sprintf(buffer, "##Mass%d", i);
+						ImGui::InputDouble(buffer, &(particle->mass), 0, 0, "%g", ImGuiInputTextFlags_ReadOnly);
 
 						ImGui::Text("Charge");
 						ImGui::SameLine();
-						ImGui::InputDouble("##Charge", &(particle->charge), ImGuiInputTextFlags_ReadOnly);
+						if (particle->type == ZWBOSON) {
+							double charge = particle->charge;
+							sprintf(buffer, "+1##ChargeP%d", i);
+							RadioButtonD(buffer, &(particle->charge), 1);
+							ImGui::SameLine();
+							sprintf(buffer, "0##Charge0%d", i);
+							RadioButtonD(buffer, &(particle->charge), 0);
+							ImGui::SameLine();
+							sprintf(buffer, "-1##ChargeN%d", i);
+							RadioButtonD(buffer, &(particle->charge), -1);
+							if (charge != particle->charge) {
+								particle->mass = particle_getMassForType(ZWBOSON, particle->charge);
+							}
+						} else {
+							sprintf(buffer, "##Charge%d", i);
+							ImGui::InputDouble(buffer, &(particle->charge), 0, 0, "%g", ImGuiInputTextFlags_ReadOnly);
+						}
 
 						ImGui::Text("Spin");
 						ImGui::SameLine();
 						if (particle->type & FERMION) {
-							RadioButtonF("+1/2", &(particle->spin), 0.5f);
+							sprintf(buffer, "+1/2##Spin%d", i);
+							RadioButtonF(buffer, &(particle->spin), 0.5f);
 							ImGui::SameLine();
-							RadioButtonF("-1/2", &(particle->spin), -0.5f);
+							sprintf(buffer, "-1/2##Spin%d", i);
+							RadioButtonF(buffer, &(particle->spin), -0.5f);
 						} else {
 							if (particle->type == HIGGS) {
-								ImGui::InputFloat("##Spin", &(particle->spin), ImGuiInputTextFlags_ReadOnly);
+								sprintf(buffer, "##Spin%d", i);
+								ImGui::InputFloat(buffer, &(particle->spin), 0, 0, "%g", ImGuiInputTextFlags_ReadOnly);
 							} else {
-								RadioButtonF("+1", &(particle->spin), 1.f);
+								sprintf(buffer, "+1##Spin%d", i);
+								RadioButtonF(buffer, &(particle->spin), 1.f);
 								ImGui::SameLine();
-								RadioButtonF("-1", &(particle->spin), -1.f);
+								sprintf(buffer, "-1##Spin%d", i);
+								RadioButtonF(buffer, &(particle->spin), -1.f);
 							}
 						}
 
 						ImGui::Text("Initial Position (x,y,z)");
-						ImGui::InputDouble("##PosX", &(particle->position.x));
-						ImGui::SameLine();
-						ImGui::InputDouble("##PosY", &(particle->position.y));
-						ImGui::SameLine();
-						ImGui::InputDouble("##PosZ", &(particle->position.z));
+						sprintf(buffer, "##PosX%d", i);
+						ImGui::InputDouble(buffer, &(particle->position.x));
+						sprintf(buffer, "##PosY%d", i);
+						ImGui::InputDouble(buffer, &(particle->position.y));
+						sprintf(buffer, "##PosZ%d", i);
+						ImGui::InputDouble(buffer, &(particle->position.z));
 
 						ImGui::Text("Initial Velocity (x,y,z)");
-						ImGui::InputDouble("##VelX", &(particle->velocity.x));
-						ImGui::SameLine();
-						ImGui::InputDouble("##VelY", &(particle->velocity.y));
-						ImGui::SameLine();
-						ImGui::InputDouble("##VelZ", &(particle->velocity.z));
+						sprintf(buffer, "##VelX%d", i);
+						ImGui::InputDouble(buffer, &(particle->velocity.x));
+						sprintf(buffer, "##VelY%d", i);
+						ImGui::InputDouble(buffer, &(particle->velocity.y));
+						sprintf(buffer, "##VelZ%d", i);
+						ImGui::InputDouble(buffer, &(particle->velocity.z));
+
+						if (ImGui::Button("Switch to Antiparticle")) {
+							particle_switchToAntiparticle(particle);
+						}
 
 						bool didDelete = false;
 						if (ImGui::Button("Delete Particle")) {

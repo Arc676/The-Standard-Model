@@ -36,6 +36,12 @@ void glfwErrorCallback(int error, const char* description) {
 	fprintf(stderr, "GLFW error %d: %s\n", error, description);
 }
 
+void RadioButtonF(const char* label, float* v, float v_button) {
+	if (ImGui::RadioButton(label, *v == v_button)) {
+		*v = v_button;
+	}
+}
+
 void saveConfiguration() {
 	FILE* file = fopen(outputFilename, "wb");
 	simconf_writeSimulationConfiguration(&simConfig, file);
@@ -114,7 +120,7 @@ int main() {
 				if (ImGui::Button("Add Particle")) {
 					int idx = simConfig.particleCount++;
 					particles[idx] = (Particle){
-						idx, 0, ELECTRON, {0, 0, 0}, {1, 0, 0}, 1.0, 1.0, 0.5
+						idx, 0, ELECTRON, {0, 0, 0}, {1, 0, 0}, 1.0, 1.0, 0.5f
 					};
 					if (simConfig.particleCount >= particleArraySize) {
 						resizeArray();
@@ -123,10 +129,59 @@ int main() {
 
 				for (int i = 0; i < simConfig.particleCount; i++) {
 					if (ImGui::TreeNode("Particle")) {
+						Particle* particle = particles + i;
+
+						ImGui::Text("Strangeness");
+						ImGui::SameLine();
+						ImGui::InputInt("##Strangeness", &(particle->strangeness), ImGuiInputTextFlags_ReadOnly);
+
+						ImGui::Text("Mass");
+						ImGui::SameLine();
+						ImGui::InputDouble("##Mass", &(particle->mass), ImGuiInputTextFlags_ReadOnly);
+
+						ImGui::Text("Charge");
+						ImGui::SameLine();
+						ImGui::InputDouble("##Charge", &(particle->charge), ImGuiInputTextFlags_ReadOnly);
+
+						ImGui::Text("Spin");
+						ImGui::SameLine();
+						if (particle->type & FERMION) {
+							RadioButtonF("+1/2", &(particle->spin), 0.5f);
+							ImGui::SameLine();
+							RadioButtonF("-1/2", &(particle->spin), -0.5f);
+						} else {
+							if (particle->type == HIGGS) {
+								ImGui::InputFloat("##Spin", &(particle->spin), ImGuiInputTextFlags_ReadOnly);
+							} else {
+								RadioButtonF("+1", &(particle->spin), 1.f);
+								ImGui::SameLine();
+								RadioButtonF("-1", &(particle->spin), -1.f);
+							}
+						}
+
+						ImGui::Text("Initial Position (x,y,z)");
+						ImGui::InputDouble("##PosX", &(particle->position.x));
+						ImGui::SameLine();
+						ImGui::InputDouble("##PosY", &(particle->position.y));
+						ImGui::SameLine();
+						ImGui::InputDouble("##PosZ", &(particle->position.z));
+
+						ImGui::Text("Initial Velocity (x,y,z)");
+						ImGui::InputDouble("##VelX", &(particle->velocity.x));
+						ImGui::SameLine();
+						ImGui::InputDouble("##VelY", &(particle->velocity.y));
+						ImGui::SameLine();
+						ImGui::InputDouble("##VelZ", &(particle->velocity.z));
+
+						bool didDelete = false;
 						if (ImGui::Button("Delete Particle")) {
 							Particle* dst = particles + i;
 							memmove(dst, dst + 1, (particleArraySize - i - 1) * sizeof(Particle));
 							simConfig.particleCount--;
+							didDelete = true;
+						}
+						ImGui::TreePop();
+						if (didDelete) {
 							break;
 						}
 					}

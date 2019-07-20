@@ -102,3 +102,73 @@ void particle_typeToString(Particle* particle, char* str) {
 		break;
 	}
 }
+
+void particle_switchToType(Particle* particle, ParticleType type) {
+	particle->type = type;
+	particle->strangeness = type == STRANGEQ ? -1 : 0;
+	// Default to Z boson for weak force carriers
+	if ((type & NEUTRINO) == NEUTRINO || type == HIGGS || type == PHOTON || type == GLUON || type == ZWBOSON) {
+		particle->charge = 0;
+	} else if ((type & LEPTON) == LEPTON) {
+		particle->charge = -1;
+	} else if ((type & QUARK) == QUARK) {
+		if ((type & UPQ) == UPQ) {
+			particle->charge = 1.f / 3;
+		} else {
+			particle->charge = -1.f / 3;
+		}
+	}
+	if (type == HIGGS) {
+		particle->spin = 0;
+	} else {
+		particle->spin = type & FERMION ? 0.5f : 1.f;
+	}
+	particle->mass = particle_getMassForType(type, particle->charge);
+}
+
+void particle_switchToAntiparticle(Particle* particle) {
+	particle->charge *= -1;
+	particle->strangeness *= -1;
+}
+
+double particle_getMassForType(ParticleType type, double charge) {
+	switch (type) {
+	case ELECTRON:
+		return .511e6;
+	case MUON:
+		return 105.66e6;
+	case TAU:
+		return 1.7768e9;
+	case ENEUTRINO:
+		return 2.2;
+	case MNEUTRINO:
+		return .17e6;
+	case TNEUTRINO:
+		return 18.2e6;
+	case UPQ:
+		return 2.2e6;
+	case DOWNQ:
+		return 4.7e6;
+	case CHARMQ:
+		return 1.28e9;
+	case STRANGEQ:
+		return 96e6;
+	case TOPQ:
+		return 173.1e9;
+	case BOTTOMQ:
+		return 4.18e9;
+	case GLUON:
+	case PHOTON:
+		return 0;
+	case HIGGS:
+		return 124.97e9;
+	case ZWBOSON:
+		if (charge == 0) {
+			return 91.19e9;
+		} else {
+			return 80.39e9;
+		}
+	default:
+		return -1;
+	}
+}

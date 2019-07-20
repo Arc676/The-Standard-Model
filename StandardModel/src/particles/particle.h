@@ -97,6 +97,12 @@ void particle_update(Particle* particle, double dt);
 
 void particle_typeToString(Particle* particle, char* str);
 
+void particle_switchToType(Particle* particle, ParticleType type);
+
+void particle_switchToAntiparticle(Particle* particle);
+
+double particle_getMassForType(ParticleType type, double charge);
+
 #endif
 
 #ifdef __cplusplus

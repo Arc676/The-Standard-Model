@@ -3,3 +3,4 @@ obj
 *.a
 bin/
 *.ignore
+*.ini
